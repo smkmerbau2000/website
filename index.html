@@ -3,401 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Registry</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <title>Student Registration System</title>
+    <!-- Include Supabase JS Library -->
+    <script src="https://jsdelivr.net"></script>
     <style>
         :root {
-            --bg: #f3f4f6;
-            --card: #ffffff;
-            --text: #1f2937;
-            --muted: #6b7280;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
             --primary: #4f46e5;
             --primary-hover: #4338ca;
             --border: #e5e7eb;
-            --success-bg: #d1fae5;
-            --success-text: #065f46;
-            --error-bg: #fee2e2;
-            --error-text: #991b1b;
-            --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
         }
 
-        * { box-sizing: border-box; }
-
-        html, body {
-            margin: 0;
-            padding: 0;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 2rem 1rem;
             line-height: 1.5;
         }
 
-        body {
-            min-height: 100vh;
-            padding: 2rem 1rem;
-        }
+        .container { max-width: 900px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 2rem; }
+        header h1 { color: var(--primary); font-size: 2.2rem; }
 
-        .container {
-            max-width: 980px;
-            margin: 0 auto;
+        /* Connection Badge Styling */
+        #conn-check {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            background: #e5e7eb;
+            color: #4b5563;
         }
-
-        header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        header h1 {
-            margin: 0 0 0.5rem;
-            color: var(--primary);
-            font-size: clamp(2rem, 4vw, 2.5rem);
-        }
-
-        header p {
-            margin: 0;
-            color: var(--muted);
-            font-size: 1rem;
-        }
+        .conn-success { background: #d1fae5 !important; color: #065f46 !important; }
+        .conn-failed { background: #fee2e2 !important; color: #991b1b !important; }
 
         .main-layout {
             display: grid;
             grid-template-columns: 1fr;
             gap: 2rem;
         }
-
         @media (min-width: 768px) {
-            .main-layout {
-                grid-template-columns: minmax(300px, 1fr) minmax(400px, 1.4fr);
-            }
+            .main-layout { grid-template-columns: 1fr 1.5fr; }
         }
 
         .box {
-            background: var(--card);
+            background: var(--card-bg);
             padding: 1.5rem;
-            border-radius: 12px;
+            border-radius: 8px;
             border: 1px solid var(--border);
-            box-shadow: var(--shadow);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
-
-        h2 {
-            margin: 0 0 1rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid var(--border);
-            font-size: 1.35rem;
+        h2 { font-size: 1.25rem; margin-bottom: 1.2rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
+        
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; font-weight: 500; margin-bottom: 0.4rem; font-size: 0.9rem; }
+        input, select {
+            width: 100%; padding: 0.6rem; border: 1px solid var(--border);
+            border-radius: 6px; font-size: 1rem; outline: none;
         }
+        input:focus, select:focus { border-color: var(--primary); }
 
+        button {
+            width: 100%; background: var(--primary); color: white; border: none;
+            padding: 0.7rem; border-radius: 6px; font-size: 1rem; font-weight: 600;
+            cursor: pointer; transition: background 0.2s;
+        }
+        button:hover { background: var(--primary-hover); }
+
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem; }
+        th, td { padding: 0.75rem; border-bottom: 1px solid var(--border); }
+        th { background: #f9fafb; font-weight: 600; }
+        
         .status-msg {
-            display: none;
-            margin-bottom: 1rem;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            font-size: 0.92rem;
-            text-align: center;
-            word-break: break-word;
+            padding: 0.5rem; margin-bottom: 1rem; border-radius: 4px;
+            font-size: 0.9rem; display: none; text-align: center;
         }
-
-        .status-msg.success {
-            display: block;
-            background: var(--success-bg);
-            color: var(--success-text);
-        }
-
-        .status-msg.error {
-            display: block;
-            background: var(--error-bg);
-            color: var(--error-text);
-        }
-
-        form {
-            display: grid;
-            gap: 1rem;
-        }
-
-        .form-group {
-            display: grid;
-            gap: 0.45rem;
-        }
-
-        label {
-            font-size: 0.92rem;
-            font-weight: 600;
-        }
-
-        input,
-        select,
-        button {
-            font: inherit;
-        }
-
-        input,
-        select {
-            width: 100%;
-            padding: 0.75rem 0.8rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: #fff;
-            color: var(--text);
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        input:focus,
-        select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
-        }
-
-        button {
-            width: 100%;
-            border: none;
-            border-radius: 8px;
-            background: var(--primary);
-            color: white;
-            font-weight: 700;
-            padding: 0.8rem 1rem;
-            cursor: pointer;
-            transition: background 0.2s ease, transform 0.1s ease;
-        }
-
-        button:hover:not(:disabled) {
-            background: var(--primary-hover);
-        }
-
-        button:active:not(:disabled) {
-            transform: translateY(1px);
-        }
-
-        button:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .table-container {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.95rem;
-        }
-
-        th,
-        td {
-            padding: 0.8rem 0.75rem;
-            border-bottom: 1px solid var(--border);
-            vertical-align: top;
-        }
-
-        thead th {
-            background: #f9fafb;
-            font-weight: 700;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: var(--muted);
-            padding: 1rem;
-        }
-
-        .student-email {
-            display: block;
-            margin-top: 0.2rem;
-            color: var(--muted);
-            font-size: 0.8rem;
-        }
+        .status-success { background: #d1fae5; color: #065f46; display: block; }
+        .status-error { background: #fee2e2; color: #991b1b; display: block; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Student Registry</h1>
-            <p>Manage student registrations securely using Supabase</p>
-        </header>
 
-        <div class="main-layout">
-            <section class="box" aria-labelledby="register-title">
-                <h2 id="register-title">Register New Student</h2>
-                <div id="status" class="status-msg" aria-live="polite"></div>
+<div class="container">
+    <header>
+        <h1>Student Registry</h1>
+        <p>Manage database records securely via Supabase</p>
+        <!-- The Live Connection Badge -->
+        <div id="conn-check">Checking connection to Supabase...</div>
+    </header>
 
-                <form id="regForm" novalidate>
-                    <div class="form-group">
-                        <label for="studentId">Student ID / Matric No.</label>
-                        <input type="text" id="studentId" name="student_id" required placeholder="e.g. STU1023">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="fullName">Full Name</label>
-                        <input type="text" id="fullName" name="full_name" required placeholder="John Doe">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" required placeholder="john@example.com">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="course">Course / Major</label>
-                        <select id="course" name="course" required>
-                            <option value="">Select Course</option>
-                            <option value="Computer Science">Computer Science</option>
-                            <option value="Information Technology">Information Technology</option>
-                            <option value="Data Science">Data Science</option>
-                            <option value="Business Administration">Business Administration</option>
-                        </select>
-                    </div>
-
-                    <button id="submitBtn" type="submit">Submit Registration</button>
-                </form>
-            </section>
-
-            <section class="box" aria-labelledby="directory-title">
-                <h2 id="directory-title">Registered Directory</h2>
-                <div class="table-container">
-                    <table id="studentTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Course</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="3" class="empty-state">Loading students...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+    <div class="main-layout">
+        <!-- Registration Form -->
+        <div class="box">
+            <h2>Register New Student</h2>
+            <div id="status" class="status-msg"></div>
+            <form id="regForm">
+                <div class="form-group">
+                    <label for="studentId">Student ID / Matric No.</label>
+                    <input type="text" id="studentId" required placeholder="e.g. STU1023">
                 </div>
-            </section>
+                <div class="form-group">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required placeholder="john@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="course">Course / Major</label>
+                    <select id="course" required>
+                        <option value="">Select Course</option>
+                        <option value="Computer Science">Computer Science</option>
+                        <option value="Information Technology">Information Technology</option>
+                        <option value="Data Science">Data Science</option>
+                        <option value="Business Administration">Business Administration</option>
+                    </select>
+                </div>
+                <button type="submit">Submit Registration</button>
+            </form>
+        </div>
+
+        <!-- Registered Students Directory -->
+        <div class="box">
+            <h2>Registered Directory</h2>
+            <div class="table-container">
+                <table id="studentTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Course</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="3" style="text-align:center;">Loading students...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+</div>
 
-    <script>
-        // Replace with your actual Supabase project URL and anon key from the project settings dashboard.
-        const SUPABASE_URL = 'https://mjsqmseswgypflzdhiqc.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qc3Ftc2Vzd2d5cGZsemRoaXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExOTU0NzgsImV4cCI6MjEwNjc3MTQ3OH0.OnmJV4uWB2e-VsMiI4mgiEr36nDeBedELAIURQViovg';
+<script>
+    // 1. SUPABASE CONFIGURATION
+    const SUPABASE_URL = 'https://supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qc3Ftc2Vzd2d5cGZsemRoaXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExOTU0NzgsImV4cCI6MjEwNjc3MTQ3OH0.OnmJV4uWB2e-VsMiI4mgiEr36nDeBedELAIURQViovg';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Initialize Supabase Client
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const regForm = document.getElementById('regForm');
-        const studentTableBody = document.querySelector('#studentTable tbody');
-        const statusDiv = document.getElementById('status');
-        const submitBtn = document.getElementById('submitBtn');
+    // DOM Elements
+    const regForm = document.getElementById('regForm');
+    const studentTableBody = document.querySelector('#studentTable tbody');
+    const statusDiv = document.getElementById('status');
+    const connCheckDiv = document.getElementById('conn-check');
 
-        function showStatus(message, type = '') {
-            statusDiv.textContent = message;
-            statusDiv.className = 'status-msg';
-
-            if (type) {
-                statusDiv.classList.add(type);
+    // NEW SIMPLE CONNECTION TESTER FUNCTION
+    async function testConnection() {
+        try {
+            // Attempt to make a simple diagnostic call to your database project settings
+            const { data, error } = await supabase.from('students').select('id').limit(1);
+            
+            if (error) {
+                // Connection made, but database returned a schema or permission block
+                connCheckDiv.textContent = `❌ Database Error: ${error.message}`;
+                connCheckDiv.className = 'conn-failed';
+                console.error("Supabase Error Context:", error);
+            } else {
+                // Complete handshake achieved successfully
+                connCheckDiv.textContent = "🟢 Connected to Supabase Successfully!";
+                connCheckDiv.className = 'conn-success';
             }
+        } catch (err) {
+            // Hard network failure (wrong URL format or script library crashed)
+            connCheckDiv.textContent = `❌ Network Error: Could not reach Supabase server`;
+            connCheckDiv.className = 'conn-failed';
+            console.error("Network Error Context:", err);
+        }
+    }
+
+    // 2. FETCH AND DISPLAY STUDENTS
+    async function fetchStudents() {
+        const { data, error } = await supabase
+            .from('students')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red;">Failed to load data.</td></tr>`;
+            return;
         }
 
-        function escapeHtml(value) {
-            if (value === null || value === undefined) return '';
-            return String(value)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+        if (data.length === 0) {
+            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;">No students registered yet.</td></tr>`;
+            return;
         }
 
-        async function fetchStudents() {
-            try {
-                const { data, error } = await supabase
-                    .from('students')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (error) {
-                    throw error;
-                }
-
-                if (!data || data.length === 0) {
-                    studentTableBody.innerHTML = '<tr><td colspan="3" class="empty-state">No students registered yet.</td></tr>';
-                    return;
-                }
-
-                studentTableBody.innerHTML = '';
-
-                data.forEach((student) => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><strong>${escapeHtml(student.student_id)}</strong></td>
-                        <td>
-                            ${escapeHtml(student.full_name)}
-                            <small class="student-email">${escapeHtml(student.email)}</small>
-                        </td>
-                        <td>${escapeHtml(student.course)}</td>
-                    `;
-                    studentTableBody.appendChild(row);
-                });
-            } catch (error) {
-                console.error('Error fetching students:', error);
-                studentTableBody.innerHTML = '<tr><td colspan="3" class="empty-state" style="color: #991b1b;">Failed to load students.</td></tr>';
-            }
-        }
-
-        regForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            const studentId = document.getElementById('studentId').value.trim();
-            const fullName = document.getElementById('fullName').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const course = document.getElementById('course').value.trim();
-
-            if (!studentId || !fullName || !email || !course) {
-                showStatus('Please fill in all fields before submitting.', 'error');
-                return;
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting...';
-            showStatus('Submitting details...', '');
-
-            try {
-                const { data, error } = await supabase
-                    .from('students')
-                    .insert([
-                        {
-                            student_id: studentId,
-                            full_name: fullName,
-                            email,
-                            course
-                        }
-                    ])
-                    .select();
-
-                if (error) {
-                    if (error.code === '23505') {
-                        showStatus('Error: Student ID already exists.', 'error');
-                    } else {
-                        showStatus(`Error saving record: ${error.message || 'Unknown error'}`, 'error');
-                    }
-                    return;
-                }
-
-                if (data && data.length > 0) {
-                    showStatus('Student registered successfully!', 'success');
-                    regForm.reset();
-                    await fetchStudents();
-                } else {
-                    showStatus('Student saved successfully, but no data was returned.', 'success');
-                    await fetchStudents();
-                }
-            } catch (error) {
-                console.error('Insert error:', error);
-                showStatus('Network or connection error. Please try again.', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit Registration';
-            }
+        studentTableBody.innerHTML = '';
+        data.forEach(student => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${escapeHtml(student.student_id)}</strong></td>
+                <td>${escapeHtml(student.full_name)}<br><small style="color:gray">${escapeHtml(student.email)}</small></td>
+                <td>${escapeHtml(student.course)}</td>
+            `;
+            studentTableBody.appendChild(row);
         });
+    }
 
-        fetchStudents();
-    </script>
-</body>
-</html>
+    // 3. HANDLE FORM SUBMISSION
+    regForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showStatus('Submitting details...', '');
+
+        const student_id = document.getElementById('studentId').value;
+        const full_name = document.getElementById('fullName').value;
+        const email = document.getElementById('email').value;
+        const course = document.getElementById('course').value;
+
+        const { error } = await supabase
+            .from('students')
+            .insert([{ student_id, full_name, email, course }]);
+
+        if (error) {
+            if(error.code === '23505') { 
+                showStatus('Error: Student ID already exists!', 'error');
+            } else {
+                showStatus('Error saving record: ' + error.message, 'error');
+            }
+        } else {
