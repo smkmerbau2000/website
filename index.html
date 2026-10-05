@@ -79,7 +79,7 @@
     <header>
         <h1>Student Registry System</h1>
         <p>Live Database Records Directory Viewer</p>
-        <div id="conn-check">Connecting to Neon Database...</div>
+        <div id="conn-check">Connecting to Neon Data API...</div>
     </header>
 
     <div class="directory-box">
@@ -110,9 +110,15 @@
 </div>
 
 <script>
-    // 1. PLACE YOUR POSTGRESQL CONNECTION STRING HERE
-    // It MUST start with postgres:// or postgresql:// (Copied from Neon dashboard Connect window)
-    const NEON_CONNECTION_STRING = 'postgresql://neondb_owner:npg_1G5WJkRdxTzF@ep-divine-breeze-16069843-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require';
+    // 1. EXTRACTED DETAILS FROM YOUR CONNECTION STRING
+    const NEON_PROJECT_ID = 'ep-divine-breeze-16069843'; // Your Neon project identifier
+    const NEON_DATABASE = 'neondb';                     // Your database name
+    const NEON_USER = 'neondb_owner';                   // Database username
+    
+    // 2. IMPORTANT ACTION REQUIRED: 
+    // Go to your Neon Dashboard -> Project Settings -> API Keys.
+    // Generate a new token and paste it here. Do NOT paste your raw 'postgresql://' URL.
+    const NEON_API_KEY = 'napi_qh093j5bgq0a0fgsn75rf5dck8uk0f7jgsoyhjca60hkf58gjfmq8w1smx38wpwm'; 
 
     const studentTableBody = document.querySelector('#studentTable tbody');
     const connCheckDiv = document.getElementById('conn-check');
@@ -120,36 +126,42 @@
 
     async function fetchFromNeon() {
         try {
-            if (NEON_CONNECTION_STRING.includes('PASTE_YOUR_CONNECTION')) {
-                connCheckDiv.textContent = "⚠️ Action Required: Paste Connection Link";
+            if (NEON_API_KEY.includes('PASTE_YOUR_NEON')) {
+                connCheckDiv.textContent = "⚠️ Action Required: Paste API Key Token";
                 connCheckDiv.className = 'conn-failed';
                 return;
             }
 
-            // FIXED: Using the dedicated Public SQL Gateway Endpoint URL
-            const publicApiEndpoint = 'https://neon.tech';
+            // CORRECT HTTP API ENDPOINT: Targets the core SQL engine instead of the web platform landing page
+            const publicApiEndpoint = `https://neon.tech{NEON_PROJECT_ID}/query`;
 
             const response = await fetch(publicApiEndpoint, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${NEON_API_KEY}`
+                },
                 body: JSON.stringify({
-                    connectionString: NEON_CONNECTION_STRING,
-                    sql: "SELECT student_id, full_name, email, course FROM public.students ORDER BY id DESC;"
+                    database: NEON_DATABASE,
+                    role: NEON_USER,
+                    query: "SELECT student_id, full_name, email, course FROM public.students ORDER BY id DESC;"
                 })
             });
 
             if (!response.ok) {
-                const errorResponse = await response.json();
-                throw new Error(errorResponse.message || `Server status code: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Server status code: ${response.status}`);
             }
 
             const result = await response.json();
+            
+            // The Neon Data API returns query outputs inside a 'rows' array attribute
             const data = result.rows || [];
 
             connCheckDiv.textContent = "🟢 Connected live to Neon Data Layer";
             connCheckDiv.className = 'conn-success';
 
-            if (!data || data.length === 0) {
+            if (data.length === 0) {
                 counterBadge.textContent = "0 Students";
                 studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">Connected, but table is empty.</td></tr>`;
                 return;
@@ -174,7 +186,7 @@
         } catch (err) {
             connCheckDiv.textContent = `❌ Error: ${err.message}`;
             connCheckDiv.className = 'conn-failed';
-            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Could not load data records.</td></tr>`;
+            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Could not load data records. Check browser developer console.</td></tr>`;
             console.error("Diagnostic Details:", err);
         }
     }
