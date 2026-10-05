@@ -100,7 +100,7 @@
                 <tbody>
                     <tr>
                         <td colspan="3" style="text-align:center; padding: 2rem; color: #6b7280;">
-                            Loading records securely via Edge Web Serverless pipeline...
+                            Loading records from database...
                         </td>
                     </tr>
                 </tbody>
@@ -109,14 +109,10 @@
     </div>
 </div>
 
-<!-- This script layout uses standard browser modules to execute native, secure connections -->
-<script type="module">
-    // FIXED: Switched connection framework to unblocked edge module driver library package
-    import { neon } from 'https://esm.sh';
-
-    // 1. PASTE YOUR CONNECTION DETAILS FROM THE GREEN "CONNECT" BUTTON HERE
-    // It must begin with postgresql:// or postgres://
-    const DATABASE_CONNECTION_LINK = 'postgresql://neondb_owner:npg_1G5WJkRdxTzF@ep-divine-breeze-16069843-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require';
+<script>
+    // 1. PLACE YOUR POSTGRESQL CONNECTION STRING HERE
+    // It MUST start with postgres:// or postgresql:// (Copied from Neon dashboard Connect window)
+    const NEON_CONNECTION_STRING = 'postgresql://neondb_owner:npg_1G5WJkRdxTzF@ep-divine-breeze-16069843-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require';
 
     const studentTableBody = document.querySelector('#studentTable tbody');
     const connCheckDiv = document.getElementById('conn-check');
@@ -124,24 +120,38 @@
 
     async function fetchFromNeon() {
         try {
-            if (DATABASE_CONNECTION_LINK.includes('PASTE_YOUR_CONNECTION')) {
+            if (NEON_CONNECTION_STRING.includes('PASTE_YOUR_CONNECTION')) {
                 connCheckDiv.textContent = "⚠️ Action Required: Paste Connection Link";
                 connCheckDiv.className = 'conn-failed';
                 return;
             }
 
-            // Initializes the serverless driver directly inside the browser framework sandbox
-            const sql = neon(DATABASE_CONNECTION_LINK);
-            
-            // Execute native Postgres statements effortlessly without hitting CORS network limits
-            const data = await sql`SELECT student_id, full_name, email, course FROM public.students ORDER BY id DESC;`;
+            // FIXED: Using the dedicated Public SQL Gateway Endpoint URL
+            const publicApiEndpoint = 'https://neon.tech';
 
-            connCheckDiv.textContent = "🟢 Connected live to Neon via Secure Driver";
+            const response = await fetch(publicApiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    connectionString: NEON_CONNECTION_STRING,
+                    sql: "SELECT student_id, full_name, email, course FROM public.students ORDER BY id DESC;"
+                })
+            });
+
+            if (!response.ok) {
+                const errorResponse = await response.json();
+                throw new Error(errorResponse.message || `Server status code: ${response.status}`);
+            }
+
+            const result = await response.json();
+            const data = result.rows || [];
+
+            connCheckDiv.textContent = "🟢 Connected live to Neon Data Layer";
             connCheckDiv.className = 'conn-success';
 
             if (!data || data.length === 0) {
                 counterBadge.textContent = "0 Students";
-                studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">Connected successfully, but table is empty.</td></tr>`;
+                studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">Connected, but table is empty.</td></tr>`;
                 return;
             }
 
@@ -162,9 +172,9 @@
             });
 
         } catch (err) {
-            connCheckDiv.textContent = `❌ Driver Error: ${err.message}`;
+            connCheckDiv.textContent = `❌ Error: ${err.message}`;
             connCheckDiv.className = 'conn-failed';
-            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Could not load data records. Double-check your database login password.</td></tr>`;
+            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Could not load data records.</td></tr>`;
             console.error("Diagnostic Details:", err);
         }
     }
@@ -175,7 +185,6 @@
             .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
-    // Run connection engine on window execution sequence
     fetchFromNeon();
 </script>
 </body>
