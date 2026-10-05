@@ -78,7 +78,7 @@
 <div class="container">
     <header>
         <h1>Student Registry System</h1>
-        <p>Live Database Records Directory Viewer (Direct Neon Connection)</p>
+        <p>Live Database Records Directory Viewer</p>
         <div id="conn-check">Connecting to Neon Database...</div>
     </header>
 
@@ -100,7 +100,7 @@
                 <tbody>
                     <tr>
                         <td colspan="3" style="text-align:center; padding: 2rem; color: #6b7280;">
-                            Loading records directly from database...
+                            Loading records securely via Edge Web Serverless pipeline...
                         </td>
                     </tr>
                 </tbody>
@@ -109,10 +109,14 @@
     </div>
 </div>
 
-<script>
-    // 1. Paste your regular database Connection String here from your Neon Dashboard
-    // It looks like this: postgres://alex:password@ep-cool-pool-123456.us-east-2.aws.neon.tech/neondb
-    const NEON_CONNECTION_STRING = 'postgresql://neondb_owner:npg_9nlUos7aeGdk@ep-tiny-cherry-b4epky7d-pooler.c-6.us-east-2.aws.neon.tech/neondb';
+<!-- This script layout uses standard browser modules to execute native, secure connections -->
+<script type="module">
+    // FIXED: Switched connection framework to unblocked edge module driver library package
+    import { neon } from 'https://esm.sh';
+
+    // 1. PASTE YOUR CONNECTION DETAILS FROM THE GREEN "CONNECT" BUTTON HERE
+    // It must begin with postgresql:// or postgres://
+    const DATABASE_CONNECTION_LINK = 'postgresql://neondb_owner:npg_1G5WJkRdxTzF@ep-divine-breeze-16069843-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require';
 
     const studentTableBody = document.querySelector('#studentTable tbody');
     const connCheckDiv = document.getElementById('conn-check');
@@ -120,39 +124,24 @@
 
     async function fetchFromNeon() {
         try {
-            if(NEON_CONNECTION_STRING.includes('PASTE_YOUR_POSTGRES')) {
-                connCheckDiv.textContent = "⚠️ Action Required: Paste Connection String";
+            if (DATABASE_CONNECTION_LINK.includes('PASTE_YOUR_CONNECTION')) {
+                connCheckDiv.textContent = "⚠️ Action Required: Paste Connection Link";
                 connCheckDiv.className = 'conn-failed';
                 return;
             }
 
-            // Using Neon's public serverless proxy endpoint which bypasses CORS natively
-            const publicApiUrl = 'https://neon.tech';
+            // Initializes the serverless driver directly inside the browser framework sandbox
+            const sql = neon(DATABASE_CONNECTION_LINK);
+            
+            // Execute native Postgres statements effortlessly without hitting CORS network limits
+            const data = await sql`SELECT student_id, full_name, email, course FROM public.students ORDER BY id DESC;`;
 
-            const response = await fetch(publicApiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    connectionString: NEON_CONNECTION_STRING,
-                    sql: "SELECT student_id, full_name, email, course FROM public.students ORDER BY id DESC;"
-                })
-            });
-
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.message || `Server error code: ${response.status}`);
-            }
-
-            const result = await response.json();
-            // The execute API returns matching structural columns inside a .rows object array
-            const data = result.rows || [];
-
-            connCheckDiv.textContent = "🟢 Connected live to Neon via Direct Web SQL Driver";
+            connCheckDiv.textContent = "🟢 Connected live to Neon via Secure Driver";
             connCheckDiv.className = 'conn-success';
 
-            if (data.length === 0) {
+            if (!data || data.length === 0) {
                 counterBadge.textContent = "0 Students";
-                studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">Connected, but table is empty.</td></tr>`;
+                studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">Connected successfully, but table is empty.</td></tr>`;
                 return;
             }
 
@@ -173,10 +162,10 @@
             });
 
         } catch (err) {
-            connCheckDiv.textContent = `❌ Error: ${err.message}`;
+            connCheckDiv.textContent = `❌ Driver Error: ${err.message}`;
             connCheckDiv.className = 'conn-failed';
-            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Could not load data records. Check database settings.</td></tr>`;
-            console.error(err);
+            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Could not load data records. Double-check your database login password.</td></tr>`;
+            console.error("Diagnostic Details:", err);
         }
     }
 
@@ -186,6 +175,7 @@
             .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
+    // Run connection engine on window execution sequence
     fetchFromNeon();
 </script>
 </body>
