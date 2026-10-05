@@ -9,8 +9,7 @@
             --bg-color: #f3f4f6;
             --card-bg: #ffffff;
             --text-color: #1f2937;
-            --primary: #00e699; /* Neon Tech Emerald Green */
-            --primary-dark: #00b377;
+            --primary: #00b377;
             --border: #e5e7eb;
         }
 
@@ -25,7 +24,7 @@
 
         .container { max-width: 800px; margin: 0 auto; }
         header { text-align: center; margin-bottom: 2.5rem; }
-        header h1 { color: var(--primary-dark); font-size: 2.5rem; margin-bottom: 0.5rem; }
+        header h1 { color: var(--primary); font-size: 2.5rem; margin-bottom: 0.5rem; }
         header p { opacity: 0.7; font-size: 1.1rem; }
 
         #conn-check {
@@ -59,7 +58,7 @@
         }
         .directory-header h2 { font-size: 1.5rem; }
         .counter-badge {
-            background: var(--primary-dark);
+            background: var(--primary);
             color: white;
             padding: 0.2rem 0.75rem;
             border-radius: 20px;
@@ -79,8 +78,8 @@
 <div class="container">
     <header>
         <h1>Student Registry System</h1>
-        <p>Live Database Records Directory Viewer (Neon Serverless Engine)</p>
-        <div id="conn-check">Connecting to Neon pipeline...</div>
+        <p>Live Database Records Directory Viewer (Direct Neon Connection)</p>
+        <div id="conn-check">Connecting to Neon Database...</div>
     </header>
 
     <div class="directory-box">
@@ -101,7 +100,7 @@
                 <tbody>
                     <tr>
                         <td colspan="3" style="text-align:center; padding: 2rem; color: #6b7280;">
-                            Initializing standard HTTP data fetch channels...
+                            Loading records directly from database...
                         </td>
                     </tr>
                 </tbody>
@@ -111,8 +110,9 @@
 </div>
 
 <script>
-    // Paste your HTTP API Endpoint string from the Neon Connection panel box here:
-    const NEON_API_URL = 'https://ep-tiny-cherry-b4epky7d.apirest.c-6.us-east-2.aws.neon.tech';
+    // 1. Paste your regular database Connection String here from your Neon Dashboard
+    // It looks like this: postgres://alex:password@ep-cool-pool-123456.us-east-2.aws.neon.tech/neondb
+    const NEON_CONNECTION_STRING = 'https://ep-tiny-cherry-b4epky7d.apirest.c-6.us-east-2.aws.neon.tech/neondb';
 
     const studentTableBody = document.querySelector('#studentTable tbody');
     const connCheckDiv = document.getElementById('conn-check');
@@ -120,34 +120,39 @@
 
     async function fetchFromNeon() {
         try {
-            // Check if user forgot to replace the placeholder link string
-            if(NEON_API_URL.includes('PASTE_YOUR_NEON')) {
-                connCheckDiv.textContent = "⚠️ Action Required: Paste Neon API URL in index.html";
+            if(NEON_CONNECTION_STRING.includes('PASTE_YOUR_POSTGRES')) {
+                connCheckDiv.textContent = "⚠️ Action Required: Paste Connection String";
                 connCheckDiv.className = 'conn-failed';
-                studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">Please paste your real Neon HTTP endpoint into code line 115.</td></tr>`;
                 return;
             }
 
-            // Neon receives native Postgres instructions wrapped via baseline browser fetch calls
-            const response = await fetch(NEON_API_URL, {
+            // Using Neon's public serverless proxy endpoint which bypasses CORS natively
+            const publicApiUrl = `https://neon.tech`;
+
+            const response = await fetch(publicApiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: "SELECT student_id, full_name, email, course FROM public.students ORDER BY created_at DESC;" })
+                body: JSON.stringify({
+                    connectionString: NEON_CONNECTION_STRING,
+                    sql: "SELECT student_id, full_name, email, course FROM public.students ORDER BY id DESC;"
+                })
             });
 
             if (!response.ok) {
-                throw new Error(`Database server rejected request with status code: ${response.status}`);
+                const errData = await response.json();
+                throw new Error(errData.message || `Server error code: ${response.status}`);
             }
 
             const result = await response.json();
+            // The execute API returns matching structural columns inside a .rows object array
             const data = result.rows || [];
 
-            connCheckDiv.textContent = "🟢 Connected live to Neon Data Layer";
+            connCheckDiv.textContent = "🟢 Connected live to Neon via Direct Web SQL Driver";
             connCheckDiv.className = 'conn-success';
 
             if (data.length === 0) {
                 counterBadge.textContent = "0 Students";
-                studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">Connected successfully, but table contains 0 records.</td></tr>`;
+                studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">Connected, but table is empty.</td></tr>`;
                 return;
             }
 
@@ -168,9 +173,9 @@
             });
 
         } catch (err) {
-            connCheckDiv.textContent = "❌ Connection Refused (Network Firewall Block)";
+            connCheckDiv.textContent = `❌ Error: ${err.message}`;
             connCheckDiv.className = 'conn-failed';
-            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Failed to pull data. Open your browser console logs (F12) to audit error details.</td></tr>`;
+            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Could not load data records. Check database settings.</td></tr>`;
             console.error(err);
         }
     }
@@ -178,9 +183,7 @@
     function escapeHtml(str) {
         if (!str) return '';
         return str.toString()
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
     fetchFromNeon();
