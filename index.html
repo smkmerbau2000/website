@@ -79,8 +79,7 @@
     <header>
         <h1>Student Registry System</h1>
         <p>Live Database Records Directory Viewer</p>
-        <!-- Dynamic Connection Banner Status -->
-        <div id="conn-check">Connecting via Neon HTTP Data API...</div>
+        <div id="conn-check">Connecting via Neon Serverless Edge Driver...</div>
     </header>
 
     <div class="directory-box">
@@ -110,74 +109,48 @@
     </div>
 </div>
 
-<script>
-    // ==========================================
-    // CONFIGURATION CONFIG: UPDATE BOTH VARIABLES BELOW
-    // ==========================================
-    
-    // 1. Your Neon host name (Extracted from your connection string)
-    const NEON_HOST = 'ep-divine-breeze-16069843-pooler.us-east-2.aws.neon.tech';
-    
-    // 2. Paste your secret Neon account API Key token below
-    // (Generate this in your Neon Console -> Account Settings -> API Keys)
-    const NEON_API_KEY = 'napi_qh093j5bgq0a0fgsn75rf5dck8uk0f7jgsoyhjca60hkf58gjfmq8w1smx38wpwm'; 
+<!-- Import official Neon database serverless driver compiled for web browsers -->
+<script type="module">
+    import { neon } from 'https://jsdelivr.net';
 
-    // DOM Element References
-     const studentTableBody = document.querySelector('#studentTable tbody');
+    // 1. PLACE YOUR ORIGINAL DATABASE CONNECTION STRING HERE
+    // Paste the full 'postgresql://neondb_owner:...' URL string copied from Neon dashboard
+    const DATABASE_URL = 'postgresql://neondb_owner:npg_1G5WJkRdxTzF@ep-divine-breeze-16069843-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require';
+
+    const studentTableBody = document.querySelector('#studentTable tbody');
     const connCheckDiv = document.getElementById('conn-check');
     const counterBadge = document.getElementById('student-counter');
 
     async function fetchFromNeon() {
         try {
-            // Guard clause if user hasn't added the key yet
-            if (NEON_API_KEY.includes('PASTE_YOUR_NEON')) {
-                connCheckDiv.textContent = "⚠️ Action Required: Paste API Key Token in Script";
+            if (DATABASE_URL.includes('PASTE_YOUR_CONNE')) {
+                connCheckDiv.textContent = "⚠️ Action Required: Paste Connection Link";
                 connCheckDiv.className = 'conn-failed';
                 return;
             }
 
-            // FIXED URL: The literal, exact string required for Neon's serverless SQL API
-            const publicApiEndpoint = 'https://neon.tech';
+            // Establish the direct driver instance to handle cross-origin routing automatically
+            const sql = neon(DATABASE_URL);
 
-            const response = await fetch(publicApiEndpoint, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${NEON_API_KEY}`
-                },
-                body: JSON.stringify({
-                    host: NEON_HOST,
-                    sql: "SELECT student_id, full_name, email, course FROM public.students ORDER BY id DESC;"
-                })
-            });
+            // Execute the raw query safely through the edge websocket protocol tunnel
+            const data = await sql(`
+                SELECT student_id, full_name, email, course 
+                FROM public.students 
+                ORDER BY id DESC;
+            `);
 
-            // Handle server errors properly
-            if (!response.ok) {
-                const errBody = await response.json().catch(() => ({}));
-                throw new Error(errBody.message || `HTTP Server Status ${response.status}`);
-            }
-
-            const result = await response.json();
-            
-            // The Neon Data API returns query rows inside a native 'rows' array parameter
-            const data = result.rows || [];
-
-            // UI Connection State Update
             connCheckDiv.textContent = "🟢 Connected live to Neon Data Layer";
             connCheckDiv.className = 'conn-success';
 
-            // Empty Database Check
-            if (data.length === 0) {
+            if (!data || data.length === 0) {
                 counterBadge.textContent = "0 Students";
                 studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">Connected, but table is empty.</td></tr>`;
                 return;
             }
 
-            // Populate Student Counter Badge
             counterBadge.textContent = `${data.length} Student${data.length > 1 ? 's' : ''}`;
             studentTableBody.innerHTML = '';
             
-            // Render Database Matrix Rows
             data.forEach(student => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -192,24 +165,20 @@
             });
 
         } catch (err) {
-            // Comprehensive Front-End Error Interception Display
             connCheckDiv.textContent = `❌ Error: ${err.message}`;
             connCheckDiv.className = 'conn-failed';
-            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Could not load data records. Open browser DevTools console to review errors.</td></tr>`;
+            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Could not load data records. Check database connections.</td></tr>`;
             console.error("Diagnostic Details:", err);
         }
     }
 
-    // Helper: Prevent Cross-Site Scripting (XSS) injection vulnerabilities
     function escapeHtml(str) {
         if (!str) return '';
         return str.toString()
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
-    // Initialize Network Thread Fetch Engine
+    // Run the engine
     fetchFromNeon();
 </script>
 </body>
