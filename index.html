@@ -79,7 +79,8 @@
     <header>
         <h1>Student Registry System</h1>
         <p>Live Database Records Directory Viewer</p>
-        <div id="conn-check">Connecting to Neon Data API...</div>
+        <!-- Dynamic Connection Banner Status -->
+        <div id="conn-check">Connecting via Neon HTTP Data API...</div>
     </header>
 
     <div class="directory-box">
@@ -110,30 +111,33 @@
 </div>
 
 <script>
-    // 1. EXTRACTED DETAILS FROM YOUR CONNECTION STRING
-    const NEON_PROJECT_ID = 'ep-divine-breeze-16069843'; // Your Neon project identifier
-    const NEON_DATABASE = 'neondb';                     // Your database name
-    const NEON_USER = 'neondb_owner';                   // Database username
+    // ==========================================
+    // CONFIGURATION CONFIG: UPDATE BOTH VARIABLES BELOW
+    // ==========================================
     
-    // 2. IMPORTANT ACTION REQUIRED: 
-    // Go to your Neon Dashboard -> Project Settings -> API Keys.
-    // Generate a new token and paste it here. Do NOT paste your raw 'postgresql://' URL.
+    // 1. Your Neon host name (Extracted from your connection string)
+    const NEON_HOST = 'ep-divine-breeze-16069843-pooler.us-east-2.aws.neon.tech';
+    
+    // 2. Paste your secret Neon account API Key token below
+    // (Generate this in your Neon Console -> Account Settings -> API Keys)
     const NEON_API_KEY = 'napi_qh093j5bgq0a0fgsn75rf5dck8uk0f7jgsoyhjca60hkf58gjfmq8w1smx38wpwm'; 
 
+    // DOM Element References
     const studentTableBody = document.querySelector('#studentTable tbody');
     const connCheckDiv = document.getElementById('conn-check');
     const counterBadge = document.getElementById('student-counter');
 
     async function fetchFromNeon() {
         try {
+            // Guard clause if user hasn't added the key yet
             if (NEON_API_KEY.includes('PASTE_YOUR_NEON')) {
-                connCheckDiv.textContent = "⚠️ Action Required: Paste API Key Token";
+                connCheckDiv.textContent = "⚠️ Action Required: Paste API Key Token in Script";
                 connCheckDiv.className = 'conn-failed';
                 return;
             }
 
-            // CORRECT HTTP API ENDPOINT: Targets the core SQL engine instead of the web platform landing page
-            const publicApiEndpoint = `https://neon.tech{NEON_PROJECT_ID}/query`;
+            // CORRECT API ENDPOINT: Targets the core SQL engine instead of the web platform landing page
+            const publicApiEndpoint = `https://neon.tech`;
 
             const response = await fetch(publicApiEndpoint, {
                 method: 'POST',
@@ -142,34 +146,38 @@
                     'Authorization': `Bearer ${NEON_API_KEY}`
                 },
                 body: JSON.stringify({
-                    database: NEON_DATABASE,
-                    role: NEON_USER,
-                    query: "SELECT student_id, full_name, email, course FROM public.students ORDER BY id DESC;"
+                    host: NEON_HOST,
+                    sql: "SELECT student_id, full_name, email, course FROM public.students ORDER BY id DESC;"
                 })
             });
 
+            // Handle server errors properly
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `Server status code: ${response.status}`);
+                const errBody = await response.json().catch(() => ({}));
+                throw new Error(errBody.message || `HTTP Server Status ${response.status}`);
             }
 
             const result = await response.json();
             
-            // The Neon Data API returns query outputs inside a 'rows' array attribute
+            // The Neon Data API returns query rows inside a native 'rows' array parameter
             const data = result.rows || [];
 
+            // UI Connection State Update
             connCheckDiv.textContent = "🟢 Connected live to Neon Data Layer";
             connCheckDiv.className = 'conn-success';
 
+            // Empty Database Check
             if (data.length === 0) {
                 counterBadge.textContent = "0 Students";
                 studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">Connected, but table is empty.</td></tr>`;
                 return;
             }
 
+            // Populate Student Counter Badge
             counterBadge.textContent = `${data.length} Student${data.length > 1 ? 's' : ''}`;
             studentTableBody.innerHTML = '';
             
+            // Render Database Matrix Rows
             data.forEach(student => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -184,19 +192,24 @@
             });
 
         } catch (err) {
+            // Comprehensive Front-End Error Interception Display
             connCheckDiv.textContent = `❌ Error: ${err.message}`;
             connCheckDiv.className = 'conn-failed';
-            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Could not load data records. Check browser developer console.</td></tr>`;
+            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Could not load data records. Open browser DevTools console to review errors.</td></tr>`;
             console.error("Diagnostic Details:", err);
         }
     }
 
+    // Helper: Prevent Cross-Site Scripting (XSS) injection injection vulnerabilities
     function escapeHtml(str) {
         if (!str) return '';
         return str.toString()
-            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
     }
 
+    // Initialize Network Thread Fetch Engine
     fetchFromNeon();
 </script>
 </body>
