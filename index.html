@@ -9,7 +9,8 @@
             --bg-color: #f3f4f6;
             --card-bg: #ffffff;
             --text-color: #1f2937;
-            --primary: #4f46e5;
+            --primary: #00e699; /* Neon Tech Emerald Green */
+            --primary-dark: #00b377;
             --border: #e5e7eb;
         }
 
@@ -24,7 +25,7 @@
 
         .container { max-width: 800px; margin: 0 auto; }
         header { text-align: center; margin-bottom: 2.5rem; }
-        header h1 { color: var(--primary); font-size: 2.5rem; margin-bottom: 0.5rem; }
+        header h1 { color: var(--primary-dark); font-size: 2.5rem; margin-bottom: 0.5rem; }
         header p { opacity: 0.7; font-size: 1.1rem; }
 
         #conn-check {
@@ -58,7 +59,7 @@
         }
         .directory-header h2 { font-size: 1.5rem; }
         .counter-badge {
-            background: var(--primary);
+            background: var(--primary-dark);
             color: white;
             padding: 0.2rem 0.75rem;
             border-radius: 20px;
@@ -78,8 +79,8 @@
 <div class="container">
     <header>
         <h1>Student Registry System</h1>
-        <p>Live Database Records Directory Viewer</p>
-        <div id="conn-check">Connecting to data stream...</div>
+        <p>Live Database Records Directory Viewer (Neon Serverless Engine)</p>
+        <div id="conn-check">Connecting to Neon pipeline...</div>
     </header>
 
     <div class="directory-box">
@@ -100,7 +101,7 @@
                 <tbody>
                     <tr>
                         <td colspan="3" style="text-align:center; padding: 2rem; color: #6b7280;">
-                            Initializing connection and loading profiles...
+                            Initializing standard HTTP data fetch channels...
                         </td>
                     </tr>
                 </tbody>
@@ -109,46 +110,50 @@
     </div>
 </div>
 
-<!-- Modern modular ES integration block that bypasses window attachment limitations -->
-<script type="module">
-    import { createClient } from 'https://jsdelivr.net';
-
-    const SUPABASE_URL = 'https://mjsqmseswgypflzdhiqc.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qc3Ftc2Vzd2d5cGZsemRoaXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExOTU0NzgsImV4cCI6MjEwNjc3MTQ3OH0.OnmJV4uWB2e-VsMiI4mgiEr36nDeBedELAIURQViovg';
-
-    // Safe modular instantiation initialization
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<script>
+    // Paste your HTTP API Endpoint string from the Neon Connection panel box here:
+    const NEON_API_URL = 'https://ep-tiny-cherry-b4epky7d.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
 
     const studentTableBody = document.querySelector('#studentTable tbody');
     const connCheckDiv = document.getElementById('conn-check');
     const counterBadge = document.getElementById('student-counter');
 
-    async function fetchAndRenderDirectory() {
+    async function fetchFromNeon() {
         try {
-            const { data, error } = await supabase
-                .from('students')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                connCheckDiv.textContent = `❌ Database Sync Failed: ${error.message}`;
+            // Check if user forgot to replace the placeholder link string
+            if(NEON_API_URL.includes('PASTE_YOUR_NEON')) {
+                connCheckDiv.textContent = "⚠️ Action Required: Paste Neon API URL in index.html";
                 connCheckDiv.className = 'conn-failed';
-                studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Could not read database layout map.</td></tr>`;
+                studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">Please paste your real Neon HTTP endpoint into code line 115.</td></tr>`;
                 return;
             }
 
-            connCheckDiv.textContent = "🟢 Connected live to Supabase Data Layer";
+            // Neon receives native Postgres instructions wrapped via baseline browser fetch calls
+            const response = await fetch(NEON_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: "SELECT student_id, full_name, email, course FROM public.students ORDER BY created_at DESC;" })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Database server rejected request with status code: ${response.status}`);
+            }
+
+            const result = await response.json();
+            const data = result.rows || [];
+
+            connCheckDiv.textContent = "🟢 Connected live to Neon Data Layer";
             connCheckDiv.className = 'conn-success';
 
-            if (!data || data.length === 0) {
+            if (data.length === 0) {
                 counterBadge.textContent = "0 Students";
-                studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">No students registered in database yet.</td></tr>`;
+                studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">Connected successfully, but table contains 0 records.</td></tr>`;
                 return;
             }
 
             counterBadge.textContent = `${data.length} Student${data.length > 1 ? 's' : ''}`;
-
             studentTableBody.innerHTML = '';
+            
             data.forEach(student => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -157,16 +162,16 @@
                         <span style="font-weight: 500;">${escapeHtml(student.full_name)}</span><br>
                         <small style="color: #6b7280;">${escapeHtml(student.email)}</small>
                     </td>
-                    <td><span style="color: #4f46e5; font-weight: 500;">${escapeHtml(student.course)}</span></td>
+                    <td><span style="color: #00b377; font-weight: 500;">${escapeHtml(student.course)}</span></td>
                 `;
                 studentTableBody.appendChild(row);
             });
 
-        } catch (catchErr) {
-            connCheckDiv.textContent = "❌ Network Link Broken";
+        } catch (err) {
+            connCheckDiv.textContent = "❌ Connection Refused (Network Firewall Block)";
             connCheckDiv.className = 'conn-failed';
-            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Fatal connectivity interruption.</td></tr>`;
-            console.error(catchErr);
+            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Failed to pull data. Open your browser console logs (F12) to audit error details.</td></tr>`;
+            console.error(err);
         }
     }
 
@@ -175,12 +180,10 @@
         return str.toString()
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+            .replace(/>/g, "&gt;");
     }
 
-    fetchAndRenderDirectory();
+    fetchFromNeon();
 </script>
 </body>
 </html>
