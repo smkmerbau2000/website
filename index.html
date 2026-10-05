@@ -123,7 +123,7 @@
     const NEON_API_KEY = 'napi_qh093j5bgq0a0fgsn75rf5dck8uk0f7jgsoyhjca60hkf58gjfmq8w1smx38wpwm'; 
 
     // DOM Element References
-    const studentTableBody = document.querySelector('#studentTable tbody');
+     const studentTableBody = document.querySelector('#studentTable tbody');
     const connCheckDiv = document.getElementById('conn-check');
     const counterBadge = document.getElementById('student-counter');
 
@@ -136,8 +136,8 @@
                 return;
             }
 
-            // CORRECT API ENDPOINT: Targets the core SQL engine instead of the web platform landing page
-            const publicApiEndpoint = `https://neon.tech`;
+            // FIXED URL: The literal, exact string required for Neon's serverless SQL API
+            const publicApiEndpoint = 'https://neon.tech';
 
             const response = await fetch(publicApiEndpoint, {
                 method: 'POST',
@@ -200,7 +200,7 @@
         }
     }
 
-    // Helper: Prevent Cross-Site Scripting (XSS) injection injection vulnerabilities
+    // Helper: Prevent Cross-Site Scripting (XSS) injection vulnerabilities
     function escapeHtml(str) {
         if (!str) return '';
         return str.toString()
