@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Directory Dashboard</title>
-    <!-- FIXED: Using unpkg cdn fallback because jsdelivr is blocked on your network -->
-    <script src="https://unpkg.com"></script>
     <style>
         :root {
             --bg-color: #f3f4f6;
@@ -111,12 +109,15 @@
     </div>
 </div>
 
-<script>
+<!-- Modern modular ES integration block that bypasses window attachment limitations -->
+<script type="module">
+    import { createClient } from 'https://jsdelivr.net';
+
     const SUPABASE_URL = 'https://mjsqmseswgypflzdhiqc.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qc3Ftc2Vzd2d5cGZsemRoaXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExOTU0NzgsImV4cCI6MjEwNjc3MTQ3OH0.OnmJV4uWB2e-VsMiI4mgiEr36nDeBedELAIURQViovg';
 
-    // Initialize Supabase Client using standard object context lookup
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Safe modular instantiation initialization
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const studentTableBody = document.querySelector('#studentTable tbody');
     const connCheckDiv = document.getElementById('conn-check');
