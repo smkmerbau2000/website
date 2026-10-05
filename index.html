@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration System</title>
+    <!-- Include Supabase JS Library -->
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --border: #e5e7eb;
+            --success: #10b981;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 2rem 1rem;
+            line-height: 1.5;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 2rem; }
+        header h1 { color: var(--primary); font-size: 2.2rem; }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        @media (min-width: 768px) {
+            .main-layout { grid-template-columns: 1fr 1.5fr; }
+        }
+
+        /* Form and Box Styles */
+        .box {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+        h2 { font-size: 1.25rem; margin-bottom: 1.2rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
+        
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; font-weight: 500; margin-bottom: 0.4rem; font-size: 0.9rem; }
+        input, select {
+            width: 100%; padding: 0.6rem; border: 1px solid var(--border);
+            border-radius: 6px; font-size: 1rem; outline: none;
+        }
+        input:focus, select:focus { border-color: var(--primary); }
+
+        button {
+            width: 100%; background: var(--primary); color: white; border: none;
+            padding: 0.7rem; border-radius: 6px; font-size: 1rem; font-weight: 600;
+            cursor: pointer; transition: background 0.2s;
+        }
+        button:hover { background: var(--primary-hover); }
+
+        /* Table Styles */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem; }
+        th, td { padding: 0.75rem; border-bottom: 1px solid var(--border); }
+        th { background: #f9fafb; font-weight: 600; }
+        
+        .status-msg {
+            padding: 0.5rem; margin-bottom: 1rem; border-radius: 4px;
+            font-size: 0.9rem; display: none; text-align: center;
+        }
+        .status-success { background: #d1fae5; color: #065f46; display: block; }
+        .status-error { background: #fee2e2; color: #991b1b; display: block; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Student Registry</h1>
+        <p>Manage database records securely via Supabase</p>
+    </header>
+
+    <div class="main-layout">
+        <!-- Registration Form -->
+        <div class="box">
+            <h2>Register New Student</h2>
+            <div id="status" class="status-msg"></div>
+            <form id="regForm">
+                <div class="form-group">
+                    <label for="studentId">Student ID / Matric No.</label>
+                    <input type="text" id="studentId" required placeholder="e.g. STU1023">
+                </div>
+                <div class="form-group">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required placeholder="john@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="course">Course / Major</label>
+                    <select id="course" required>
+                        <option value="">Select Course</option>
+                        <option value="Computer Science">Computer Science</option>
+                        <option value="Information Technology">Information Technology</option>
+                        <option value="Data Science">Data Science</option>
+                        <option value="Business Administration">Business Administration</option>
+                    </select>
+                </div>
+                <button type="submit">Submit Registration</button>
+            </form>
+        </div>
+
+        <!-- Registered Students Directory -->
+        <div class="box">
+            <h2>Registered Directory</h2>
+            <div class="table-container">
+                <table id="studentTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Course</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="3" style="text-align:center;">Loading students...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. SUPABASE CONFIGURATION
+    // Replace these strings with your actual project details from the Supabase settings panel
+    const SUPABASE_URL = 'https://supabase.co';
+    const SUPABASE_ANON_KEY = 'your-anon-public-key-here';
+
+    // Initialize Supabase Client
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // DOM Elements
+    const regForm = document.getElementById('regForm');
+    const studentTableBody = document.querySelector('#studentTable tbody');
+    const statusDiv = document.getElementById('status');
+
+    // 2. FETCH AND DISPLAY STUDENTS
+    async function fetchStudents() {
+        const { data, error } = await supabase
+            .from('students')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching data:', error);
+            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red;">Failed to load data.</td></tr>`;
+            return;
+        }
+
+        if (data.length === 0) {
+            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;">No students registered yet.</td></tr>`;
+            return;
+        }
+
+        // Populate Table
+        studentTableBody.innerHTML = '';
+        data.forEach(student => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${escapeHtml(student.student_id)}</strong></td>
+                <td>${escapeHtml(student.full_name)}<br><small style="color:gray">${escapeHtml(student.email)}</small></td>
+                <td>${escapeHtml(student.course)}</td>
+            `;
+            studentTableBody.appendChild(row);
+        });
+    }
+
+    // 3. HANDLE FORM SUBMISSION
+    regForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showStatus('Submitting details...', '');
+
+        const student_id = document.getElementById('studentId').value;
+        const full_name = document.getElementById('fullName').value;
+        const email = document.getElementById('email').value;
+        const course = document.getElementById('course').value;
+
+        // Insert into Supabase
+        const { error } = await supabase
+            .from('students')
+            .insert([{ student_id, full_name, email, course }]);
+
+        if (error) {
+            if(error.code === '23505') { // Unique constraint violation code
+                showStatus('Error: Student ID already exists!', 'error');
+            } else {
+                showStatus('Error saving record: ' + error.message, 'error');
+            }
+        } else {
+            showStatus('Student registered successfully!', 'success');
+            regForm.reset();
+            fetchStudents(); // Refresh the table layout
+        }
+    });
+
+    // Helper functions for UI Feedback and Security
+    function showStatus(msg, type) {
+        statusDiv.textContent = msg;
+        statusDiv.className = 'status-msg';
+        if (type === 'success') statusDiv.classList.add('status-success');
+        if (type === 'error') statusDiv.classList.add('status-error');
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    // Run on startup
+    fetchStudents();
+</script>
+</body>
+</html>
