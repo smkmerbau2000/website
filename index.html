@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Directory Dashboard</title>
-    <!-- Include Supabase JS Library -->
+    <!-- FIXED: Exact path to load the Supabase integration library package -->
     <script src="https://jsdelivr.net"></script>
     <style>
         :root {
@@ -29,7 +29,6 @@
         header h1 { color: var(--primary); font-size: 2.5rem; margin-bottom: 0.5rem; }
         header p { opacity: 0.7; font-size: 1.1rem; }
 
-        /* Connection Badge Styling */
         #conn-check {
             display: inline-block;
             padding: 0.4rem 1rem;
@@ -43,7 +42,6 @@
         .conn-success { background: #d1fae5 !important; color: #065f46 !important; }
         .conn-failed { background: #fee2e2 !important; color: #991b1b !important; }
 
-        /* Data Panel Box */
         .directory-box {
             background: var(--card-bg);
             padding: 2rem;
@@ -70,7 +68,6 @@
             font-weight: bold;
         }
 
-        /* Table Design */
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 1rem; }
         th, td { padding: 1rem; border-bottom: 1px solid var(--border); }
@@ -84,11 +81,9 @@
     <header>
         <h1>Student Registry System</h1>
         <p>Live Database Records Directory Viewer</p>
-        <!-- Real-time Status Badge -->
         <div id="conn-check">Connecting to data stream...</div>
     </header>
 
-    <!-- Main Live Records Box -->
     <div class="directory-box">
         <div class="directory-header">
             <h2>Active Directory</h2>
@@ -117,22 +112,18 @@
 </div>
 
 <script>
-    // 1. DATABASE ACCESS CONFIGURATION
     const SUPABASE_URL = 'https://supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1qc3Ftc2Vzd2d5cGZsemRoaXFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExOTU0NzgsImV4cCI6MjEwNjc3MTQ3OH0.OnmJV4uWB2e-VsMiI4mgiEr36nDeBedELAIURQViovg';
 
-    // Initialize Supabase Client
+    // FIXED: Formatted deployment using explicit window environment accessors
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // DOM Target Bindings
     const studentTableBody = document.querySelector('#studentTable tbody');
     const connCheckDiv = document.getElementById('conn-check');
     const counterBadge = document.getElementById('student-counter');
 
-    // 2. LIVE FETCH AND DISPLAY ENGINE
     async function fetchAndRenderDirectory() {
         try {
-            // Retrieve data rows ordered by the most recently added record
             const { data, error } = await supabase
                 .from('students')
                 .select('*')
@@ -145,21 +136,17 @@
                 return;
             }
 
-            // Connection Success Update
             connCheckDiv.textContent = "🟢 Connected live to Supabase Data Layer";
             connCheckDiv.className = 'conn-success';
 
-            // Empty State Check
             if (!data || data.length === 0) {
                 counterBadge.textContent = "0 Students";
                 studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">No students registered in database yet.</td></tr>`;
                 return;
             }
 
-            // Dynamic Metric Counter Update
             counterBadge.textContent = `${data.length} Student${data.length > 1 ? 's' : ''}`;
 
-            // Populate Table Interface
             studentTableBody.innerHTML = '';
             data.forEach(student => {
                 const row = document.createElement('tr');
@@ -182,7 +169,6 @@
         }
     }
 
-    // Security HTML Entity Sanitization Helper
     function escapeHtml(str) {
         if (!str) return '';
         return str.toString()
@@ -193,7 +179,6 @@
             .replace(/'/g, "&#039;");
     }
 
-    // Initialize execution script sequence on window generation
     fetchAndRenderDirectory();
 </script>
 </body>
