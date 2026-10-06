@@ -2,185 +2,788 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Directory Dashboard</title>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Student Registry System - Live Student Directory"
+    >
+
+    <title>Student Registry System</title>
+
     <style>
+        /* ==============================
+           CSS VARIABLES
+        ============================== */
+
         :root {
-            --bg-color: #f3f4f6;
-            --card-bg: #ffffff;
-            --text-color: #1f2937;
             --primary: #00b377;
+            --primary-dark: #009963;
+            --primary-light: #d1fae5;
+
+            --background: #f3f4f6;
+            --surface: #ffffff;
+
+            --text: #1f2937;
+            --text-muted: #6b7280;
+
             --border: #e5e7eb;
+
+            --success-bg: #d1fae5;
+            --success-text: #065f46;
+
+            --error-bg: #fee2e2;
+            --error-text: #991b1b;
+
+            --shadow:
+                0 10px 15px -3px rgba(0, 0, 0, 0.05),
+                0 4px 6px -4px rgba(0, 0, 0, 0.05);
+
+            --radius: 12px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* ==============================
+           RESET
+        ============================== */
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+
+        /* ==============================
+           BASE
+        ============================== */
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            padding: 3rem 1rem;
+            min-height: 100vh;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Helvetica,
+                Arial,
+                sans-serif;
+
+            background: var(--background);
+            color: var(--text);
+
             line-height: 1.5;
         }
 
-        .container { max-width: 800px; margin: 0 auto; }
-        header { text-align: center; margin-bottom: 2.5rem; }
-        header h1 { color: var(--primary); font-size: 2.5rem; margin-bottom: 0.5rem; }
-        header p { opacity: 0.7; font-size: 1.1rem; }
 
-        #conn-check {
-            display: inline-block;
-            padding: 0.4rem 1rem;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.85rem;
-            margin-top: 1rem;
+        /* ==============================
+           PAGE LAYOUT
+        ============================== */
+
+        .page {
+            width: 100%;
+            padding: 48px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+
+        /* ==============================
+           HEADER
+        ============================== */
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            color: var(--primary);
+            font-size: clamp(2rem, 5vw, 2.75rem);
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+
+        /* ==============================
+           CONNECTION STATUS
+        ============================== */
+
+        .connection-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+
+            margin-top: 16px;
+            padding: 7px 16px;
+
+            border-radius: 999px;
+
             background: #e5e7eb;
             color: #4b5563;
-        }
-        .conn-success { background: #d1fae5 !important; color: #065f46 !important; }
-        .conn-failed { background: #fee2e2 !important; color: #991b1b !important; }
 
-        .directory-box {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            font-size: 0.85rem;
+            font-weight: 600;
+
+            transition:
+                background-color 0.2s ease,
+                color 0.2s ease;
         }
-        
+
+        .connection-status.success {
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+
+        .connection-status.error {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+
+
+        /* ==============================
+           DIRECTORY CARD
+        ============================== */
+
+        .directory-card {
+            background: var(--surface);
+
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+
+            box-shadow: var(--shadow);
+
+            overflow: hidden;
+        }
+
+
+        /* ==============================
+           DIRECTORY HEADER
+        ============================== */
+
         .directory-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid var(--border);
+            gap: 16px;
+
+            padding: 24px;
+
+            border-bottom: 1px solid var(--border);
         }
-        .directory-header h2 { font-size: 1.5rem; }
-        .counter-badge {
+
+        .directory-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .directory-description {
+            margin-top: 4px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+
+        /* ==============================
+           COUNTER
+        ============================== */
+
+        .student-counter {
+            flex-shrink: 0;
+
+            padding: 6px 14px;
+
+            border-radius: 999px;
+
             background: var(--primary);
             color: white;
-            padding: 0.2rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: bold;
+
+            font-size: 0.85rem;
+            font-weight: 700;
         }
 
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 1rem; }
-        th, td { padding: 1rem; border-bottom: 1px solid var(--border); }
-        th { background: #f9fafb; font-weight: 600; color: #374151; }
-        tr:hover { background-color: #f9fafb; }
-    </style>
-</head>
-<body>
 
-<div class="container">
-    <header>
-        <h1>Student Registry System</h1>
-        <p>Live Database Records Directory Viewer</p>
-        <div id="conn-check">Connecting via CORS-Approved Global Rest API Gateway...</div>
-    </header>
+        /* ==============================
+           TABLE
+        ============================== */
 
-    <div class="directory-box">
-        <div class="directory-header">
-            <h2>Active Directory</h2>
-            <div id="student-counter" class="counter-badge">0 Students</div>
-        </div>
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
 
-        <div class="table-container">
-            <table id="studentTable">
-                <thead>
-                    <tr>
-                        <th>Student ID</th>
-                        <th>Student Profile Details</th>
-                        <th>Enrolled Course</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td colspan="3" style="text-align:center; padding: 2rem; color: #6b7280;">
-                            Loading records from data layer...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+        .student-table {
+            width: 100%;
+            border-collapse: collapse;
 
-<script>
-    // This public sandbox endpoint handles cross-origin headers safely in all web browsers.
-    const PUBLIC_SAFE_API_URL = 'https://typicode.com';
+            text-align: left;
+        }
 
-    const studentTableBody = document.querySelector('#studentTable tbody');
-    const connCheckDiv = document.getElementById('conn-check');
-    const counterBadge = document.getElementById('student-counter');
+        .student-table th,
+        .student-table td {
+            padding: 16px 20px;
 
-    async function fetchFromDatabase() {
-        try {
-            // Using a standard GET request to fetch verified, open JSON array structures
-            const response = await fetch(PUBLIC_SAFE_API_URL);
+            border-bottom: 1px solid var(--border);
 
-            if (!response.ok) {
-                throw new Error(`HTTP Status Encountered: ${response.status}`);
+            vertical-align: middle;
+        }
+
+        .student-table th {
+            background: #f9fafb;
+
+            color: #374151;
+
+            font-size: 0.85rem;
+            font-weight: 700;
+
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .student-table td {
+            font-size: 0.95rem;
+        }
+
+        .student-table tbody tr {
+            transition: background-color 0.15s ease;
+        }
+
+        .student-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .student-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+
+        /* ==============================
+           STUDENT INFORMATION
+        ============================== */
+
+        .student-id {
+            color: var(--text);
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .student-name {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .student-email {
+            display: block;
+
+            margin-top: 2px;
+
+            color: var(--text-muted);
+
+            font-size: 0.85rem;
+        }
+
+        .course {
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+
+        /* ==============================
+           LOADING / EMPTY / ERROR
+        ============================== */
+
+        .table-message {
+            padding: 48px 20px !important;
+
+            text-align: center;
+
+            color: var(--text-muted);
+        }
+
+        .table-message.error {
+            color: var(--error-text);
+        }
+
+
+        /* ==============================
+           FOOTER
+        ============================== */
+
+        .page-footer {
+            margin-top: 24px;
+
+            text-align: center;
+
+            color: var(--text-muted);
+
+            font-size: 0.8rem;
+        }
+
+
+        /* ==============================
+           MOBILE
+        ============================== */
+
+        @media (max-width: 600px) {
+
+            .page {
+                padding: 32px 12px;
             }
 
-            const rawUsers = await response.json();
-            
-            // Map the raw testing data array into your specific UI dashboard format
-            const data = rawUsers.map((user, index) => ({
-                student_id: `STU-2026-${1000 + user.id}`,
-                full_name: user.name,
-                email: user.email.toLowerCase(),
-                course: index % 2 === 0 ? 'Computer Science Engineering' : 'Data Analytics & Statistics'
-            }));
+            .page-header {
+                margin-bottom: 28px;
+            }
 
-            // UI Connection Banner State Success Update
-            connCheckDiv.textContent = "🟢 Connected live to Verified API Gateway Matrix";
-            connCheckDiv.className = 'conn-success';
+            .directory-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
 
-            if (data.length === 0) {
-                counterBadge.textContent = "0 Students";
-                studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 2rem;">Connected, but table is empty.</td></tr>`;
+            .student-counter {
+                align-self: flex-start;
+            }
+
+            .student-table {
+                min-width: 650px;
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <main class="page">
+
+        <div class="container">
+
+            <!-- ==========================
+                 PAGE HEADER
+            =========================== -->
+
+            <header class="page-header">
+
+                <h1 class="page-title">
+                    Student Registry System
+                </h1>
+
+                <p class="page-subtitle">
+                    Live Database Records Directory Viewer
+                </p>
+
+                <div
+                    id="connectionStatus"
+                    class="connection-status"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <span>●</span>
+                    <span id="connectionText">
+                        Connecting to API...
+                    </span>
+                </div>
+
+            </header>
+
+
+            <!-- ==========================
+                 DIRECTORY
+            =========================== -->
+
+            <section
+                class="directory-card"
+                aria-labelledby="directoryTitle"
+            >
+
+                <div class="directory-header">
+
+                    <div>
+                        <h2
+                            id="directoryTitle"
+                            class="directory-title"
+                        >
+                            Active Directory
+                        </h2>
+
+                        <p class="directory-description">
+                            Currently enrolled students
+                        </p>
+                    </div>
+
+                    <div
+                        id="studentCounter"
+                        class="student-counter"
+                    >
+                        0 Students
+                    </div>
+
+                </div>
+
+
+                <!-- ==========================
+                     TABLE
+                =========================== -->
+
+                <div class="table-wrapper">
+
+                    <table class="student-table">
+
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    Student ID
+                                </th>
+
+                                <th scope="col">
+                                    Student Profile
+                                </th>
+
+                                <th scope="col">
+                                    Enrolled Course
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="studentTableBody">
+
+                            <tr>
+                                <td
+                                    colspan="3"
+                                    class="table-message"
+                                >
+                                    Loading student records...
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+            <!-- ==========================
+                 FOOTER
+            =========================== -->
+
+            <footer class="page-footer">
+                Student Registry System
+            </footer>
+
+        </div>
+
+    </main>
+
+
+    <!-- ==============================
+         JAVASCRIPT
+    ============================== -->
+
+    <script>
+
+        /* =================================
+           CONFIGURATION
+        ================================= */
+
+        const API_URL =
+            'https://jsonplaceholder.typicode.com/users';
+
+
+        /* =================================
+           DOM ELEMENTS
+        ================================= */
+
+        const studentTableBody =
+            document.getElementById('studentTableBody');
+
+        const connectionStatus =
+            document.getElementById('connectionStatus');
+
+        const connectionText =
+            document.getElementById('connectionText');
+
+        const studentCounter =
+            document.getElementById('studentCounter');
+
+
+        /* =================================
+           CONNECTION STATUS
+        ================================= */
+
+        function setConnectionStatus(
+            type,
+            message
+        ) {
+
+            connectionStatus.classList.remove(
+                'success',
+                'error'
+            );
+
+            if (type === 'success') {
+                connectionStatus.classList.add('success');
+            }
+
+            if (type === 'error') {
+                connectionStatus.classList.add('error');
+            }
+
+            connectionText.textContent = message;
+        }
+
+
+        /* =================================
+           ESCAPE HTML
+        ================================= */
+
+        function escapeHtml(value) {
+
+            if (value === null || value === undefined) {
+                return '';
+            }
+
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+
+        /* =================================
+           UPDATE COUNTER
+        ================================= */
+
+        function updateCounter(count) {
+
+            studentCounter.textContent =
+                `${count} Student${count === 1 ? '' : 's'}`;
+        }
+
+
+        /* =================================
+           SHOW LOADING
+        ================================= */
+
+        function showLoading() {
+
+            studentTableBody.innerHTML = `
+                <tr>
+                    <td
+                        colspan="3"
+                        class="table-message"
+                    >
+                        Loading student records...
+                    </td>
+                </tr>
+            `;
+        }
+
+
+        /* =================================
+           SHOW ERROR
+        ================================= */
+
+        function showError(message) {
+
+            studentTableBody.innerHTML = `
+                <tr>
+                    <td
+                        colspan="3"
+                        class="table-message error"
+                    >
+                        ${escapeHtml(message)}
+                    </td>
+                </tr>
+            `;
+
+            updateCounter(0);
+        }
+
+
+        /* =================================
+           RENDER STUDENTS
+        ================================= */
+
+        function renderStudents(students) {
+
+            if (!students.length) {
+
+                studentTableBody.innerHTML = `
+                    <tr>
+                        <td
+                            colspan="3"
+                            class="table-message"
+                        >
+                            No student records found.
+                        </td>
+                    </tr>
+                `;
+
+                updateCounter(0);
+
                 return;
             }
 
-            counterBadge.textContent = `${data.length} Student${data.length > 1 ? 's' : ''}`;
-            studentTableBody.innerHTML = '';
-            
-            // Safely execute DOM rendering matrix
-            data.forEach(student => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><strong>${escapeHtml(student.student_id)}</strong></td>
-                    <td>
-                        <span style="font-weight: 500;">${escapeHtml(student.full_name)}</span><br>
-                        <small style="color: #6b7280;">${escapeHtml(student.email)}</small>
-                    </td>
-                    <td><span style="color: #00b377; font-weight: 500;">${escapeHtml(student.course)}</span></td>
-                `;
-                studentTableBody.appendChild(row);
-            });
 
-        } catch (err) {
-            connCheckDiv.textContent = `❌ Network Error: ${err.message}`;
-            connCheckDiv.className = 'conn-failed';
-            studentTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red; padding: 2rem;">Could not load data records. Clear browser cache and retry.</td></tr>`;
-            console.error("Diagnostic Details:", err);
+            updateCounter(students.length);
+
+
+            studentTableBody.innerHTML =
+                students.map(student => `
+
+                    <tr>
+
+                        <td>
+                            <span class="student-id">
+                                ${escapeHtml(student.student_id)}
+                            </span>
+                        </td>
+
+
+                        <td>
+
+                            <span class="student-name">
+                                ${escapeHtml(student.full_name)}
+                            </span>
+
+                            <span class="student-email">
+                                ${escapeHtml(student.email)}
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="course">
+                                ${escapeHtml(student.course)}
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                `).join('');
         }
-    }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.toString()
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;");
-    }
 
-    // Initialize Network Thread Fetch Engine
-    fetchFromDatabase();
-</script>
+        /* =================================
+           FETCH STUDENTS
+        ================================= */
+
+        async function fetchStudents() {
+
+            showLoading();
+
+            setConnectionStatus(
+                'default',
+                'Connecting to API...'
+            );
+
+
+            try {
+
+                const response =
+                    await fetch(API_URL);
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `HTTP ${response.status}`
+                    );
+                }
+
+
+                const users =
+                    await response.json();
+
+
+                /*
+                 * Convert API users into
+                 * student records.
+                 */
+
+                const students =
+                    users.map((user, index) => ({
+
+                        student_id:
+                            `STU-2026-${1000 + user.id}`,
+
+                        full_name:
+                            user.name,
+
+                        email:
+                            user.email.toLowerCase(),
+
+                        course:
+                            index % 2 === 0
+                                ? 'Computer Science Engineering'
+                                : 'Data Analytics & Statistics'
+
+                    }));
+
+
+                setConnectionStatus(
+                    'success',
+                    'Connected to API successfully'
+                );
+
+
+                renderStudents(students);
+
+
+            } catch (error) {
+
+                console.error(
+                    'Student API Error:',
+                    error
+                );
+
+
+                setConnectionStatus(
+                    'error',
+                    'Unable to connect to API'
+                );
+
+
+                showError(
+                    'Could not load student records. Please try again.'
+                );
+
+            }
+
+        }
+
+
+        /* =================================
+           INITIALIZE APPLICATION
+        ================================= */
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            fetchStudents
+        );
+
+    </script>
+
 </body>
 </html>
