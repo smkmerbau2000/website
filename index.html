@@ -10,26 +10,29 @@
 
     <meta
         name="description"
-        content="Student Registry System - Live Student Directory"
+        content="Student Registry System powered by Supabase"
     >
 
     <title>Student Registry System</title>
 
+    <!-- Supabase JavaScript Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
-        /* ==============================
-           CSS VARIABLES
-        ============================== */
+        /* =====================================================
+           VARIABLES
+        ===================================================== */
 
         :root {
             --primary: #00b377;
-            --primary-dark: #009963;
+            --primary-dark: #008f61;
             --primary-light: #d1fae5;
 
             --background: #f3f4f6;
             --surface: #ffffff;
 
             --text: #1f2937;
-            --text-muted: #6b7280;
+            --muted: #6b7280;
 
             --border: #e5e7eb;
 
@@ -39,17 +42,19 @@
             --error-bg: #fee2e2;
             --error-text: #991b1b;
 
-            --shadow:
-                0 10px 15px -3px rgba(0, 0, 0, 0.05),
-                0 4px 6px -4px rgba(0, 0, 0, 0.05);
+            --warning-bg: #fef3c7;
+            --warning-text: #92400e;
 
             --radius: 12px;
+
+            --shadow:
+                0 10px 25px rgba(0, 0, 0, 0.05);
         }
 
 
-        /* ==============================
+        /* =====================================================
            RESET
-        ============================== */
+        ===================================================== */
 
         * {
             box-sizing: border-box;
@@ -58,9 +63,9 @@
         }
 
 
-        /* ==============================
-           BASE
-        ============================== */
+        /* =====================================================
+           BODY
+        ===================================================== */
 
         body {
             min-height: 100vh;
@@ -81,47 +86,49 @@
         }
 
 
-        /* ==============================
-           PAGE LAYOUT
-        ============================== */
+        /* =====================================================
+           PAGE
+        ===================================================== */
 
         .page {
-            width: 100%;
+            min-height: 100vh;
             padding: 48px 20px;
         }
 
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
         }
 
 
-        /* ==============================
+        /* =====================================================
            HEADER
-        ============================== */
+        ===================================================== */
 
         .page-header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 36px;
         }
 
         .page-title {
-            color: var(--primary);
-            font-size: clamp(2rem, 5vw, 2.75rem);
-            font-weight: 700;
             margin-bottom: 8px;
+
+            color: var(--primary);
+
+            font-size: clamp(2rem, 5vw, 2.7rem);
+            font-weight: 700;
         }
 
         .page-subtitle {
-            color: var(--text-muted);
-            font-size: 1.05rem;
+            color: var(--muted);
+            font-size: 1rem;
         }
 
 
-        /* ==============================
+        /* =====================================================
            CONNECTION STATUS
-        ============================== */
+        ===================================================== */
 
         .connection-status {
             display: inline-flex;
@@ -129,7 +136,7 @@
             gap: 8px;
 
             margin-top: 16px;
-            padding: 7px 16px;
+            padding: 7px 15px;
 
             border-radius: 999px;
 
@@ -144,6 +151,11 @@
                 color 0.2s ease;
         }
 
+        .connection-status.loading {
+            background: var(--warning-bg);
+            color: var(--warning-text);
+        }
+
         .connection-status.success {
             background: var(--success-bg);
             color: var(--success-text);
@@ -155,9 +167,9 @@
         }
 
 
-        /* ==============================
+        /* =====================================================
            DIRECTORY CARD
-        ============================== */
+        ===================================================== */
 
         .directory-card {
             background: var(--surface);
@@ -171,63 +183,67 @@
         }
 
 
-        /* ==============================
+        /* =====================================================
            DIRECTORY HEADER
-        ============================== */
+        ===================================================== */
 
         .directory-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            gap: 16px;
+            justify-content: space-between;
+
+            gap: 20px;
 
             padding: 24px;
 
             border-bottom: 1px solid var(--border);
         }
 
-        .directory-title {
+        .directory-heading h2 {
+            margin-bottom: 4px;
+
             font-size: 1.4rem;
             font-weight: 700;
         }
 
-        .directory-description {
-            margin-top: 4px;
-            color: var(--text-muted);
+        .directory-heading p {
+            color: var(--muted);
             font-size: 0.9rem;
         }
 
 
-        /* ==============================
+        /* =====================================================
            COUNTER
-        ============================== */
+        ===================================================== */
 
-        .student-counter {
+        .counter {
             flex-shrink: 0;
 
             padding: 6px 14px;
 
-            border-radius: 999px;
-
             background: var(--primary);
             color: white;
+
+            border-radius: 999px;
 
             font-size: 0.85rem;
             font-weight: 700;
         }
 
 
-        /* ==============================
+        /* =====================================================
            TABLE
-        ============================== */
+        ===================================================== */
 
-        .table-wrapper {
+        .table-container {
             width: 100%;
             overflow-x: auto;
         }
 
         .student-table {
             width: 100%;
+            min-width: 650px;
+
             border-collapse: collapse;
 
             text-align: left;
@@ -247,15 +263,11 @@
 
             color: #374151;
 
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 700;
 
             text-transform: uppercase;
-            letter-spacing: 0.025em;
-        }
-
-        .student-table td {
-            font-size: 0.95rem;
+            letter-spacing: 0.03em;
         }
 
         .student-table tbody tr {
@@ -271,9 +283,9 @@
         }
 
 
-        /* ==============================
+        /* =====================================================
            STUDENT INFORMATION
-        ============================== */
+        ===================================================== */
 
         .student-id {
             color: var(--text);
@@ -282,6 +294,8 @@
         }
 
         .student-name {
+            display: block;
+
             color: var(--text);
             font-weight: 600;
         }
@@ -291,74 +305,95 @@
 
             margin-top: 2px;
 
-            color: var(--text-muted);
+            color: var(--muted);
 
             font-size: 0.85rem;
         }
 
-        .course {
+        .student-course {
             color: var(--primary-dark);
             font-weight: 600;
         }
 
 
-        /* ==============================
-           LOADING / EMPTY / ERROR
-        ============================== */
+        /* =====================================================
+           TABLE STATES
+        ===================================================== */
 
-        .table-message {
-            padding: 48px 20px !important;
+        .table-state {
+            padding: 50px 20px !important;
 
             text-align: center;
 
-            color: var(--text-muted);
+            color: var(--muted);
         }
 
-        .table-message.error {
+        .table-state.error {
             color: var(--error-text);
         }
 
 
-        /* ==============================
-           FOOTER
-        ============================== */
+        /* =====================================================
+           LOADING SPINNER
+        ===================================================== */
 
-        .page-footer {
+        .loading-spinner {
+            display: inline-block;
+
+            width: 20px;
+            height: 20px;
+
+            margin-right: 8px;
+
+            border: 3px solid #d1d5db;
+            border-top-color: var(--primary);
+
+            border-radius: 50%;
+
+            vertical-align: middle;
+
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+
+        /* =====================================================
+           FOOTER
+        ===================================================== */
+
+        .footer {
             margin-top: 24px;
 
             text-align: center;
 
-            color: var(--text-muted);
+            color: var(--muted);
 
             font-size: 0.8rem;
         }
 
 
-        /* ==============================
+        /* =====================================================
            MOBILE
-        ============================== */
+        ===================================================== */
 
         @media (max-width: 600px) {
 
             .page {
-                padding: 32px 12px;
-            }
-
-            .page-header {
-                margin-bottom: 28px;
+                padding: 30px 12px;
             }
 
             .directory-header {
-                flex-direction: column;
                 align-items: flex-start;
+                flex-direction: column;
             }
 
-            .student-counter {
+            .counter {
                 align-self: flex-start;
-            }
-
-            .student-table {
-                min-width: 650px;
             }
         }
     </style>
@@ -371,9 +406,10 @@
 
         <div class="container">
 
-            <!-- ==========================
+
+            <!-- =================================================
                  PAGE HEADER
-            =========================== -->
+            ================================================== -->
 
             <header class="page-header">
 
@@ -387,22 +423,23 @@
 
                 <div
                     id="connectionStatus"
-                    class="connection-status"
+                    class="connection-status loading"
                     role="status"
                     aria-live="polite"
                 >
                     <span>●</span>
-                    <span id="connectionText">
-                        Connecting to API...
+
+                    <span id="connectionMessage">
+                        Connecting to Supabase...
                     </span>
                 </div>
 
             </header>
 
 
-            <!-- ==========================
+            <!-- =================================================
                  DIRECTORY
-            =========================== -->
+            ================================================== -->
 
             <section
                 class="directory-card"
@@ -411,22 +448,22 @@
 
                 <div class="directory-header">
 
-                    <div>
-                        <h2
-                            id="directoryTitle"
-                            class="directory-title"
-                        >
+                    <div class="directory-heading">
+
+                        <h2 id="directoryTitle">
                             Active Directory
                         </h2>
 
-                        <p class="directory-description">
-                            Currently enrolled students
+                        <p>
+                            Student records from Supabase
                         </p>
+
                     </div>
+
 
                     <div
                         id="studentCounter"
-                        class="student-counter"
+                        class="counter"
                     >
                         0 Students
                     </div>
@@ -434,16 +471,21 @@
                 </div>
 
 
-                <!-- ==========================
-                     TABLE
-                =========================== -->
+                <!-- =================================================
+                     STUDENT TABLE
+                ================================================== -->
 
-                <div class="table-wrapper">
+                <div class="table-container">
 
-                    <table class="student-table">
+                    <table
+                        id="studentTable"
+                        class="student-table"
+                    >
 
                         <thead>
+
                             <tr>
+
                                 <th scope="col">
                                     Student ID
                                 </th>
@@ -455,18 +497,29 @@
                                 <th scope="col">
                                     Enrolled Course
                                 </th>
+
                             </tr>
+
                         </thead>
+
 
                         <tbody id="studentTableBody">
 
                             <tr>
+
                                 <td
                                     colspan="3"
-                                    class="table-message"
+                                    class="table-state"
                                 >
+
+                                    <span
+                                        class="loading-spinner"
+                                    ></span>
+
                                     Loading student records...
+
                                 </td>
+
                             </tr>
 
                         </tbody>
@@ -478,12 +531,12 @@
             </section>
 
 
-            <!-- ==========================
+            <!-- =================================================
                  FOOTER
-            =========================== -->
+            ================================================== -->
 
-            <footer class="page-footer">
-                Student Registry System
+            <footer class="footer">
+                Student Registry System • Powered by Supabase
             </footer>
 
         </div>
@@ -491,40 +544,78 @@
     </main>
 
 
-    <!-- ==============================
-         JAVASCRIPT
-    ============================== -->
+    <!-- =========================================================
+         SUPABASE + APPLICATION JAVASCRIPT
+    ========================================================== -->
 
     <script>
 
-        /* =================================
-           CONFIGURATION
-        ================================= */
+        /* =====================================================
+           SUPABASE CONFIGURATION
+           -----------------------------------------------------
+           Replace these two values with your Supabase project
+           information.
 
-        const API_URL =
-            'https://jsonplaceholder.typicode.com/users';
+           IMPORTANT:
+           Use the PUBLISHABLE/ANON key here.
+
+           NEVER use the Supabase service_role/secret key
+           in this HTML file.
+        ===================================================== */
+
+        const SUPABASE_URL =
+            "https://pxvrmuxvqozmpombctxt.supabase.co";
+
+        const SUPABASE_KEY =
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4dnJtdXh2cW96bXBvbWJjdHh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyODkxMDksImV4cCI6MjEwNjg2NTEwOX0.uLA2OlxqSSiIemF9aRTn0W_fAT5C7sW4qntn0JZ5FxM";
 
 
-        /* =================================
+        /* =====================================================
+           DATABASE CONFIGURATION
+        ===================================================== */
+
+        const TABLE_NAME = "students";
+
+
+        /* =====================================================
+           CREATE SUPABASE CLIENT
+        ===================================================== */
+
+        const supabaseClient =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY
+            );
+
+
+        /* =====================================================
            DOM ELEMENTS
-        ================================= */
+        ===================================================== */
 
-        const studentTableBody =
-            document.getElementById('studentTableBody');
+        const tableBody =
+            document.getElementById(
+                "studentTableBody"
+            );
+
+        const counter =
+            document.getElementById(
+                "studentCounter"
+            );
 
         const connectionStatus =
-            document.getElementById('connectionStatus');
+            document.getElementById(
+                "connectionStatus"
+            );
 
-        const connectionText =
-            document.getElementById('connectionText');
+        const connectionMessage =
+            document.getElementById(
+                "connectionMessage"
+            );
 
-        const studentCounter =
-            document.getElementById('studentCounter');
 
-
-        /* =================================
+        /* =====================================================
            CONNECTION STATUS
-        ================================= */
+        ===================================================== */
 
         function setConnectionStatus(
             type,
@@ -532,241 +623,302 @@
         ) {
 
             connectionStatus.classList.remove(
-                'success',
-                'error'
+                "loading",
+                "success",
+                "error"
             );
 
-            if (type === 'success') {
-                connectionStatus.classList.add('success');
-            }
+            connectionStatus.classList.add(type);
 
-            if (type === 'error') {
-                connectionStatus.classList.add('error');
-            }
-
-            connectionText.textContent = message;
+            connectionMessage.textContent =
+                message;
         }
 
 
-        /* =================================
-           ESCAPE HTML
-        ================================= */
+        /* =====================================================
+           UPDATE COUNTER
+        ===================================================== */
+
+        function updateCounter(total) {
+
+            counter.textContent =
+                `${total} Student${total === 1 ? "" : "s"}`;
+        }
+
+
+        /* =====================================================
+           HTML ESCAPING
+        ===================================================== */
 
         function escapeHtml(value) {
 
-            if (value === null || value === undefined) {
-                return '';
+            if (
+                value === null ||
+                value === undefined
+            ) {
+                return "";
             }
 
             return String(value)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
 
-        /* =================================
-           UPDATE COUNTER
-        ================================= */
-
-        function updateCounter(count) {
-
-            studentCounter.textContent =
-                `${count} Student${count === 1 ? '' : 's'}`;
-        }
-
-
-        /* =================================
-           SHOW LOADING
-        ================================= */
+        /* =====================================================
+           LOADING STATE
+        ===================================================== */
 
         function showLoading() {
 
-            studentTableBody.innerHTML = `
+            tableBody.innerHTML = `
+
                 <tr>
+
                     <td
                         colspan="3"
-                        class="table-message"
+                        class="table-state"
                     >
+
+                        <span
+                            class="loading-spinner"
+                        ></span>
+
                         Loading student records...
+
                     </td>
+
                 </tr>
+
             `;
         }
 
 
-        /* =================================
-           SHOW ERROR
-        ================================= */
+        /* =====================================================
+           ERROR STATE
+        ===================================================== */
 
         function showError(message) {
 
-            studentTableBody.innerHTML = `
+            tableBody.innerHTML = `
+
                 <tr>
+
                     <td
                         colspan="3"
-                        class="table-message error"
+                        class="table-state error"
                     >
+
                         ${escapeHtml(message)}
+
                     </td>
+
                 </tr>
+
             `;
 
             updateCounter(0);
         }
 
 
-        /* =================================
+        /* =====================================================
+           EMPTY STATE
+        ===================================================== */
+
+        function showEmptyState() {
+
+            tableBody.innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="3"
+                        class="table-state"
+                    >
+
+                        No student records found.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+            updateCounter(0);
+        }
+
+
+        /* =====================================================
            RENDER STUDENTS
-        ================================= */
+        ===================================================== */
 
         function renderStudents(students) {
 
-            if (!students.length) {
+            if (
+                !Array.isArray(students)
+            ) {
 
-                studentTableBody.innerHTML = `
-                    <tr>
-                        <td
-                            colspan="3"
-                            class="table-message"
-                        >
-                            No student records found.
-                        </td>
-                    </tr>
-                `;
+                throw new Error(
+                    "Invalid student data."
+                );
+            }
 
-                updateCounter(0);
+
+            if (
+                students.length === 0
+            ) {
+
+                showEmptyState();
 
                 return;
             }
 
 
-            updateCounter(students.length);
+            updateCounter(
+                students.length
+            );
 
 
-            studentTableBody.innerHTML =
-                students.map(student => `
-
-                    <tr>
-
-                        <td>
-                            <span class="student-id">
-                                ${escapeHtml(student.student_id)}
-                            </span>
-                        </td>
+            tableBody.innerHTML = "";
 
 
-                        <td>
+            students.forEach(student => {
 
-                            <span class="student-name">
-                                ${escapeHtml(student.full_name)}
-                            </span>
-
-                            <span class="student-email">
-                                ${escapeHtml(student.email)}
-                            </span>
-
-                        </td>
+                const row =
+                    document.createElement("tr");
 
 
-                        <td>
+                row.innerHTML = `
 
-                            <span class="course">
-                                ${escapeHtml(student.course)}
-                            </span>
+                    <td>
 
-                        </td>
+                        <span class="student-id">
+                            ${escapeHtml(
+                                student.student_id
+                            )}
+                        </span>
 
-                    </tr>
+                    </td>
 
-                `).join('');
+
+                    <td>
+
+                        <span class="student-name">
+                            ${escapeHtml(
+                                student.full_name
+                            )}
+                        </span>
+
+                        <span class="student-email">
+                            ${escapeHtml(
+                                student.email
+                            )}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="student-course">
+                            ${escapeHtml(
+                                student.course
+                            )}
+                        </span>
+
+                    </td>
+
+                `;
+
+
+                tableBody.appendChild(row);
+
+            });
         }
 
 
-        /* =================================
-           FETCH STUDENTS
-        ================================= */
+        /* =====================================================
+           GET STUDENTS FROM SUPABASE
+        ===================================================== */
 
         async function fetchStudents() {
 
             showLoading();
 
+
             setConnectionStatus(
-                'default',
-                'Connecting to API...'
+                "loading",
+                "Connecting to Supabase..."
             );
 
 
             try {
 
-                const response =
-                    await fetch(API_URL);
+                const {
+                    data,
+                    error
+                } = await supabaseClient
 
+                    .from(TABLE_NAME)
 
-                if (!response.ok) {
+                    .select(
+                        "student_id, full_name, email, course"
+                    )
 
-                    throw new Error(
-                        `HTTP ${response.status}`
+                    .order(
+                        "student_id",
+                        {
+                            ascending: true
+                        }
                     );
+
+
+                /* ---------------------------------------------
+                   SUPABASE ERROR
+                --------------------------------------------- */
+
+                if (error) {
+
+                    throw error;
                 }
 
 
-                const users =
-                    await response.json();
+                /* ---------------------------------------------
+                   RENDER DATABASE DATA
+                --------------------------------------------- */
+
+                renderStudents(data);
 
 
-                /*
-                 * Convert API users into
-                 * student records.
-                 */
-
-                const students =
-                    users.map((user, index) => ({
-
-                        student_id:
-                            `STU-2026-${1000 + user.id}`,
-
-                        full_name:
-                            user.name,
-
-                        email:
-                            user.email.toLowerCase(),
-
-                        course:
-                            index % 2 === 0
-                                ? 'Computer Science Engineering'
-                                : 'Data Analytics & Statistics'
-
-                    }));
-
+                /* ---------------------------------------------
+                   SUCCESS
+                --------------------------------------------- */
 
                 setConnectionStatus(
-                    'success',
-                    'Connected to API successfully'
+                    "success",
+                    "Connected to Supabase"
                 );
-
-
-                renderStudents(students);
 
 
             } catch (error) {
 
                 console.error(
-                    'Student API Error:',
+                    "Supabase error:",
                     error
                 );
 
 
                 setConnectionStatus(
-                    'error',
-                    'Unable to connect to API'
+                    "error",
+                    "Supabase connection failed"
                 );
 
 
                 showError(
-                    'Could not load student records. Please try again.'
+                    "Unable to load student records."
                 );
 
             }
@@ -774,12 +926,12 @@
         }
 
 
-        /* =================================
-           INITIALIZE APPLICATION
-        ================================= */
+        /* =====================================================
+           INITIALIZE
+        ===================================================== */
 
         document.addEventListener(
-            'DOMContentLoaded',
+            "DOMContentLoaded",
             fetchStudents
         );
 
