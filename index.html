@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
 
@@ -18,18 +19,17 @@
     <!-- Supabase JavaScript Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+    <!-- Application CSS -->
     <link rel="stylesheet" href="css/styles.css">
-</head><body>
+</head>
+
+<body>
 
     <main class="page">
 
         <div class="container">
 
-
-            <!-- =================================================
-                 PAGE HEADER
-            ================================================== -->
-
+            <!-- PAGE HEADER -->
             <header class="page-header">
 
                 <h1 class="page-title">
@@ -56,10 +56,7 @@
             </header>
 
 
-            <!-- =================================================
-                 DIRECTORY
-            ================================================== -->
-
+            <!-- DIRECTORY -->
             <section
                 class="directory-card"
                 aria-labelledby="directoryTitle"
@@ -79,7 +76,6 @@
 
                     </div>
 
-
                     <div
                         id="studentCounter"
                         class="counter"
@@ -90,10 +86,7 @@
                 </div>
 
 
-                <!-- =================================================
-                     STUDENT TABLE
-                ================================================== -->
-
+                <!-- STUDENT TABLE -->
                 <div class="table-container">
 
                     <table
@@ -150,10 +143,7 @@
             </section>
 
 
-            <!-- =================================================
-                 FOOTER
-            ================================================== -->
-
+            <!-- FOOTER -->
             <footer class="footer">
                 Student Registry System • Powered by Supabase
             </footer>
@@ -163,396 +153,12 @@
     </main>
 
 
-    <!-- =========================================================
-         SUPABASE + APPLICATION JAVASCRIPT
-    ========================================================== -->
-
-    <script>
-
-        /* =====================================================
-           SUPABASE CONFIGURATION
-           -----------------------------------------------------
-           Replace these two values with your Supabase project
-           information.
-
-           IMPORTANT:
-           Use the PUBLISHABLE/ANON key here.
-
-           NEVER use the Supabase service_role/secret key
-           in this HTML file.
-        ===================================================== */
-
-
-        /* =====================================================
-           DATABASE CONFIGURATION
-        ===================================================== */
-
-        const TABLE_NAME = "students";
-
-
-        /* =====================================================
-           CREATE SUPABASE CLIENT
-        ===================================================== */
-
-        const supabaseClient =
-            window.supabase.createClient(
-                SUPABASE_URL,
-                SUPABASE_KEY
-            );
-
-
-        /* =====================================================
-           DOM ELEMENTS
-        ===================================================== */
-
-        const tableBody =
-            document.getElementById(
-                "studentTableBody"
-            );
-
-        const counter =
-            document.getElementById(
-                "studentCounter"
-            );
-
-        const connectionStatus =
-            document.getElementById(
-                "connectionStatus"
-            );
-
-        const connectionMessage =
-            document.getElementById(
-                "connectionMessage"
-            );
-
-
-        /* =====================================================
-           CONNECTION STATUS
-        ===================================================== */
-
-        function setConnectionStatus(
-            type,
-            message
-        ) {
-
-            connectionStatus.classList.remove(
-                "loading",
-                "success",
-                "error"
-            );
-
-            connectionStatus.classList.add(type);
-
-            connectionMessage.textContent =
-                message;
-        }
-
-
-        /* =====================================================
-           UPDATE COUNTER
-        ===================================================== */
-
-        function updateCounter(total) {
-
-            counter.textContent =
-                `${total} Student${total === 1 ? "" : "s"}`;
-        }
-
-
-        /* =====================================================
-           HTML ESCAPING
-        ===================================================== */
-
-        function escapeHtml(value) {
-
-            if (
-                value === null ||
-                value === undefined
-            ) {
-                return "";
-            }
-
-            return String(value)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-
-        /* =====================================================
-           LOADING STATE
-        ===================================================== */
-
-        function showLoading() {
-
-            tableBody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="3"
-                        class="table-state"
-                    >
-
-                        <span
-                            class="loading-spinner"
-                        ></span>
-
-                        Loading student records...
-
-                    </td>
-
-                </tr>
-
-            `;
-        }
-
-
-        /* =====================================================
-           ERROR STATE
-        ===================================================== */
-
-        function showError(message) {
-
-            tableBody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="3"
-                        class="table-state error"
-                    >
-
-                        ${escapeHtml(message)}
-
-                    </td>
-
-                </tr>
-
-            `;
-
-            updateCounter(0);
-        }
-
-
-        /* =====================================================
-           EMPTY STATE
-        ===================================================== */
-
-        function showEmptyState() {
-
-            tableBody.innerHTML = `
-
-                <tr>
-
-                    <td
-                        colspan="3"
-                        class="table-state"
-                    >
-
-                        No student records found.
-
-                    </td>
-
-                </tr>
-
-            `;
-
-            updateCounter(0);
-        }
-
-
-        /* =====================================================
-           RENDER STUDENTS
-        ===================================================== */
-
-        function renderStudents(students) {
-
-            if (
-                !Array.isArray(students)
-            ) {
-
-                throw new Error(
-                    "Invalid student data."
-                );
-            }
-
-
-            if (
-                students.length === 0
-            ) {
-
-                showEmptyState();
-
-                return;
-            }
-
-
-            updateCounter(
-                students.length
-            );
-
-
-            tableBody.innerHTML = "";
-
-
-            students.forEach(student => {
-
-                const row =
-                    document.createElement("tr");
-
-
-                row.innerHTML = `
-
-                    <td>
-
-                        <span class="student-id">
-                            ${escapeHtml(
-                                student.student_id
-                            )}
-                        </span>
-
-                    </td>
-
-
-                    <td>
-
-                        <span class="student-name">
-                            ${escapeHtml(
-                                student.full_name
-                            )}
-                        </span>
-
-                        <span class="student-email">
-                            ${escapeHtml(
-                                student.email
-                            )}
-                        </span>
-
-                    </td>
-
-
-                    <td>
-
-                        <span class="student-course">
-                            ${escapeHtml(
-                                student.course
-                            )}
-                        </span>
-
-                    </td>
-
-                `;
-
-
-                tableBody.appendChild(row);
-
-            });
-        }
-
-
-        /* =====================================================
-           GET STUDENTS FROM SUPABASE
-        ===================================================== */
-
-        async function fetchStudents() {
-
-            showLoading();
-
-
-            setConnectionStatus(
-                "loading",
-                "Connecting to Supabase..."
-            );
-
-
-            try {
-
-                const {
-                    data,
-                    error
-                } = await supabaseClient
-
-                    .from(TABLE_NAME)
-
-                    .select(
-                        "student_id, full_name, email, course"
-                    )
-
-                    .order(
-                        "student_id",
-                        {
-                            ascending: true
-                        }
-                    );
-
-
-                /* ---------------------------------------------
-                   SUPABASE ERROR
-                --------------------------------------------- */
-
-                if (error) {
-
-                    throw error;
-                }
-
-
-                /* ---------------------------------------------
-                   RENDER DATABASE DATA
-                --------------------------------------------- */
-
-                renderStudents(data);
-
-
-                /* ---------------------------------------------
-                   SUCCESS
-                --------------------------------------------- */
-
-                setConnectionStatus(
-                    "success",
-                    "Connected to Supabase"
-                );
-
-
-            } catch (error) {
-
-                console.error(
-                    "Supabase error:",
-                    error
-                );
-
-
-                setConnectionStatus(
-                    "error",
-                    "Supabase connection failed"
-                );
-
-
-                showError(
-                    "Unable to load student records."
-                );
-
-            }
-
-        }
-
-
-        /* =====================================================
-           INITIALIZE
-        ===================================================== */
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            fetchStudents
-        );
-
-    </script>
-
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Application configuration -->
     <script src="js/config.js"></script>
+
+    <!-- Application JavaScript -->
     <script src="js/app.js"></script>
+
 </body>
+
 </html>
